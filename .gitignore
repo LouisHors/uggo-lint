@@ -1,0 +1,10 @@
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# local config
+.uggo-lint.local.yaml

@@ -1,0 +1,14 @@
+runner: golangci-lint
+only_staged: true
+required_tools:
+  - go
+  - golangci-lint
+  - goimports
+default_linters:
+  - govet
+  - errcheck
+  - staticcheck
+custom_rules:
+  no-init: error
+  no-panic-outside-tests: error
+  no-fire-and-forget-go: warning

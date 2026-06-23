@@ -1,0 +1,25 @@
+[project]
+name = "uggo-lint"
+version = "0.1.0"
+description = "Reusable Git hook and pre-commit lint runner for Go repositories."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+  { name = "LouisHors" }
+]
+dependencies = [
+  "PyYAML>=6.0.2",
+]
+
+[project.scripts]
+uggo-lint = "uggo_lint:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
