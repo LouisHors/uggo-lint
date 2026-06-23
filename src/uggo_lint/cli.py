@@ -13,7 +13,11 @@ from uggo_lint.git_tools import (
     get_staged_files,
 )
 from uggo_lint.rules import Finding, run_custom_rules
-from uggo_lint.runtime import find_missing_tools, format_missing_tools
+from uggo_lint.runtime import (
+    find_missing_tools,
+    format_missing_tools,
+    format_process_failure,
+)
 
 
 @dataclass(slots=True)
@@ -21,6 +25,7 @@ class RunPlan:
     should_skip: bool
     reason: str = ""
     go_files: list[str] = field(default_factory=list)
+    lint_targets: list[str] = field(default_factory=list)
     commands: list[list[str]] = field(default_factory=list)
     step_names: list[str] = field(default_factory=list)
 
@@ -54,7 +59,13 @@ def build_run_plan(
     if only_staged_value and not go_files:
         return RunPlan(should_skip=True, reason="No staged Go files. Skipping lint run.")
 
-    commands = [["golangci-lint", "run", "--new", "./..."]]
+    lint_targets = sorted(
+        {
+            f"./{directory.as_posix()}/..." if directory.as_posix() != "." else "./..."
+            for directory in (Path(go_file).parent for go_file in go_files)
+        }
+    )
+    commands = [["golangci-lint", "run", "--new", *lint_targets]]
     step_names = ["lint"]
     if not check_only:
         commands = [
@@ -67,6 +78,7 @@ def build_run_plan(
     return RunPlan(
         should_skip=False,
         go_files=go_files,
+        lint_targets=lint_targets,
         commands=commands,
         step_names=step_names,
     )
@@ -95,12 +107,9 @@ def print_findings(findings: list[Finding], repo_root: Path) -> None:
 
 def run_process(command: list[str], repo_root: Path, step_name: str) -> int:
     try:
-        subprocess.run(command, cwd=repo_root, check=True)
+        subprocess.run(command, cwd=repo_root, check=True, capture_output=True, text=True)
     except subprocess.CalledProcessError as exc:
-        rendered = " ".join(command)
-        print(f"uggo-lint step failed: {step_name}")
-        print(f"Command: {rendered}")
-        print(f"Exit code: {exc.returncode}")
+        print(format_process_failure(step_name, exc))
         return exc.returncode
     return 0
 

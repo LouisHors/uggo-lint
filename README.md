@@ -38,6 +38,15 @@ Useful fields:
 - `ignore_paths`: directories or path prefixes reserved for future filtering
 - `ignore_rules`: custom rules reserved for future filtering
 
+## Run behavior
+
+`uggo-lint run` follows this flow:
+
+- collect staged `.go` files
+- group them by directory to build focused `golangci-lint` targets
+- run `goimports` and re-stage files unless `check_only: true`
+- print grouped step failure output with command, exit code, and stderr details
+
 ## Hook integration
 
 `uggo-lint` supports three hook setup paths:
