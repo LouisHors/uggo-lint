@@ -1,0 +1,11 @@
+# Horspowers Configuration
+# Version: 4.5.0
+# Generated: 2026-06-23T01:58:48.837Z
+
+version: 4.5.0
+development_mode: personal
+branch_strategy: simple
+testing_strategy: test-after
+completion_strategy: merge
+documentation:
+  enabled: true

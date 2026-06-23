@@ -8,3 +8,6 @@ __pycache__/
 
 # local config
 .uggo-lint.local.yaml
+
+# docs session metadata
+docs/.docs-metadata/
