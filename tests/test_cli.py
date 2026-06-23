@@ -33,3 +33,15 @@ def test_install_hooks_command_skips_native_write_for_precommit_backend(
     assert exit_code == 0
     assert "pre-commit integration" in captured.out
     assert not (tmp_path / ".git" / "hooks" / "pre-commit").exists()
+
+
+def test_install_hooks_command_auto_detects_precommit_repo(tmp_path: Path, capsys):
+    (tmp_path / ".pre-commit-config.yaml").write_text("repos: []\n", encoding="utf-8")
+
+    exit_code = install_hooks_command(tmp_path, UggoLintConfig(hook_backend="auto"))
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Detected pre-commit configuration" in captured.out
+    assert not (tmp_path / ".git" / "hooks" / "pre-commit").exists()

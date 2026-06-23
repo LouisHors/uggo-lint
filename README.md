@@ -34,9 +34,33 @@ Useful fields:
 - `mode`: `default` or `strict`
 - `only_staged`: only lint staged Go files when true
 - `check_only`: skip formatting and only run lint checks
-- `hook_backend`: preferred hook installation backend
+- `hook_backend`: `native`, `pre-commit`, or `auto`
 - `ignore_paths`: directories or path prefixes reserved for future filtering
 - `ignore_rules`: custom rules reserved for future filtering
+
+## Hook integration
+
+`uggo-lint` supports three hook setup paths:
+
+1. Native Git hook:
+
+```bash
+uggo-lint install-hooks
+```
+
+2. Existing local `pre-commit` config:
+
+```bash
+uggo-lint print-precommit-config
+```
+
+3. Reusable pre-commit repo metadata:
+
+- `.pre-commit-hooks.yaml`
+
+If `hook_backend: auto` and a repository already contains `.pre-commit-config.yaml`,
+`uggo-lint install-hooks` will tell you to use the pre-commit path instead of writing
+to `.git/hooks/pre-commit`.
 
 ## Local development
 

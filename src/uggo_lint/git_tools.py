@@ -19,6 +19,12 @@ def get_staged_files(repo_root: Path) -> list[str]:
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
+def detect_precommit_config(repo_root: Path) -> bool:
+    return (repo_root / ".pre-commit-config.yaml").exists() or (
+        repo_root / ".pre-commit-config.yml"
+    ).exists()
+
+
 def build_pre_commit_hook_script(repo_root: Path) -> str:
     return f"""#!/bin/sh
 set -eu

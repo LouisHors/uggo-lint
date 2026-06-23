@@ -8,6 +8,7 @@ from pathlib import Path
 from uggo_lint.config import UggoLintConfig, load_config
 from uggo_lint.git_tools import (
     build_pre_commit_hook_script,
+    detect_precommit_config,
     filter_go_files,
     get_staged_files,
 )
@@ -147,9 +148,16 @@ def doctor_command(config: UggoLintConfig) -> int:
 
 
 def install_hooks_command(repo_root: Path, config: UggoLintConfig) -> int:
-    if config.hook_backend != "native":
+    if config.hook_backend == "pre-commit":
         print(
             "Configured hook backend is not 'native'. "
+            "Use 'uggo-lint print-precommit-config' for pre-commit integration."
+        )
+        return 0
+
+    if config.hook_backend == "auto" and detect_precommit_config(repo_root):
+        print(
+            "Detected pre-commit configuration. "
             "Use 'uggo-lint print-precommit-config' for pre-commit integration."
         )
         return 0

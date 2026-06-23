@@ -2,7 +2,7 @@ runner: golangci-lint
 mode: default
 only_staged: true
 check_only: false
-hook_backend: native
+hook_backend: auto
 ignore_paths:
   - vendor/
 ignore_rules:

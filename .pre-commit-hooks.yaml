@@ -1,0 +1,5 @@
+- id: uggo-lint
+  name: uggo-lint
+  entry: uggo-lint run
+  language: system
+  pass_filenames: false
