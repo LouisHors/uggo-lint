@@ -5,6 +5,7 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+*.egg-info/
 
 # local config
 .uggo-lint.local.yaml

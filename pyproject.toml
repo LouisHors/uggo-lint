@@ -5,15 +5,33 @@ description = "Reusable Git hook and pre-commit lint runner for Go repositories.
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+keywords = ["go", "lint", "pre-commit", "golangci-lint", "git-hooks"]
 authors = [
   { name = "LouisHors" }
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
   "PyYAML>=6.0.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/LouisHors/uggo-lint"
+Repository = "https://github.com/LouisHors/uggo-lint"
+Issues = "https://github.com/LouisHors/uggo-lint/issues"
+
 [project.scripts]
 uggo-lint = "uggo_lint:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [

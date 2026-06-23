@@ -112,6 +112,30 @@ To reduce “local passes, CI fails” drift:
 - run `uggo-lint doctor` in CI before `uggo-lint run`
 - prefer `check_only: true` in CI-style invocations so formatting stays explicit
 
+## Installation
+
+Editable install for local development:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e .
+```
+
+With `pipx`:
+
+```bash
+pipx install .
+```
+
+After installation, verify the CLI entrypoint:
+
+```bash
+uggo-lint doctor
+uggo-lint --help
+```
+
 ## Local development
 
 ```bash
