@@ -87,6 +87,31 @@ If `hook_backend: auto` and a repository already contains `.pre-commit-config.ya
 `uggo-lint install-hooks` will tell you to use the pre-commit path instead of writing
 to `.git/hooks/pre-commit`.
 
+## Team adoption
+
+`uggo-lint` works best for Go repositories that:
+
+- already use `golangci-lint` and want a lighter pre-commit entry point
+- want a shared style baseline plus a few Uber Go Guide-inspired checks
+- need consistent local and CI lint behavior without rewriting the whole toolchain
+
+Recommended rollout:
+
+1. Install required tools on developer machines:
+   - Go
+   - `golangci-lint`
+   - `goimports`
+   - Python 3.11+
+2. Add `.uggo-lint.yaml` with your preferred `mode` and `hook_backend`
+3. Pick either native Git hooks or `pre-commit`
+4. Reuse the CI example from `examples/github-actions-go.yml`
+
+To reduce “local passes, CI fails” drift:
+
+- pin the same `golangci-lint` version in CI and developer setup docs
+- run `uggo-lint doctor` in CI before `uggo-lint run`
+- prefer `check_only: true` in CI-style invocations so formatting stays explicit
+
 ## Local development
 
 ```bash
@@ -109,7 +134,7 @@ Example:
 mode: strict
 only_staged: true
 check_only: false
-hook_backend: native
+hook_backend: auto
 ignore_paths:
   - vendor/
 ignore_rules:
