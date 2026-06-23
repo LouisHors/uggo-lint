@@ -25,6 +25,19 @@ uggo-lint print-precommit-config
 - `golangci-lint`
 - `goimports`
 
+## Configuration
+
+`uggo-lint` reads repository-level settings from `.uggo-lint.yaml`.
+
+Useful fields:
+
+- `mode`: `default` or `strict`
+- `only_staged`: only lint staged Go files when true
+- `check_only`: skip formatting and only run lint checks
+- `hook_backend`: preferred hook installation backend
+- `ignore_paths`: directories or path prefixes reserved for future filtering
+- `ignore_rules`: custom rules reserved for future filtering
+
 ## Local development
 
 ```bash
@@ -40,6 +53,19 @@ pytest -v
 See:
 
 - `examples/uggo-lint-config.example.yaml`
+
+Example:
+
+```yaml
+mode: strict
+only_staged: true
+check_only: false
+hook_backend: native
+ignore_paths:
+  - vendor/
+ignore_rules:
+  - no-fire-and-forget-go
+```
 
 ## License
 

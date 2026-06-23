@@ -34,19 +34,40 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def build_run_plan(repo_root: Path, go_files: list[str], only_staged: bool) -> RunPlan:
-    if only_staged and not go_files:
+def build_run_plan(
+    repo_root: Path,
+    go_files: list[str],
+    config: UggoLintConfig | bool | None = None,
+    *,
+    only_staged: bool | None = None,
+) -> RunPlan:
+    if isinstance(config, UggoLintConfig):
+        config_obj = config
+    else:
+        config_obj = UggoLintConfig(
+            only_staged=only_staged if only_staged is not None else bool(config),
+        )
+
+    only_staged_value = config_obj.only_staged
+    check_only = config_obj.check_only
+    if only_staged_value and not go_files:
         return RunPlan(should_skip=True, reason="No staged Go files. Skipping lint run.")
+
+    commands = [["golangci-lint", "run", "--new", "./..."]]
+    step_names = ["lint"]
+    if not check_only:
+        commands = [
+            ["goimports", "-w", *go_files],
+            ["git", "add", "--", *go_files],
+            *commands,
+        ]
+        step_names = ["format", "restage", *step_names]
 
     return RunPlan(
         should_skip=False,
         go_files=go_files,
-        commands=[
-            ["goimports", "-w", *go_files],
-            ["git", "add", "--", *go_files],
-            ["golangci-lint", "run", "--new", "./..."],
-        ],
-        step_names=["format", "restage", "lint"],
+        commands=commands,
+        step_names=step_names,
     )
 
 
@@ -86,7 +107,7 @@ def run_process(command: list[str], repo_root: Path, step_name: str) -> int:
 def run_command(repo_root: Path, config: UggoLintConfig) -> int:
     staged_files = get_staged_files(repo_root)
     go_files = filter_go_files(staged_files)
-    plan = build_run_plan(repo_root, go_files, config.only_staged)
+    plan = build_run_plan(repo_root, go_files, config)
     if plan.should_skip:
         print(plan.reason)
         return 0
@@ -125,7 +146,14 @@ def doctor_command(config: UggoLintConfig) -> int:
     return 0
 
 
-def install_hooks_command(repo_root: Path) -> int:
+def install_hooks_command(repo_root: Path, config: UggoLintConfig) -> int:
+    if config.hook_backend != "native":
+        print(
+            "Configured hook backend is not 'native'. "
+            "Use 'uggo-lint print-precommit-config' for pre-commit integration."
+        )
+        return 0
+
     hook_path = repo_root / ".git" / "hooks" / "pre-commit"
     backup_path = repo_root / ".git" / "hooks" / "pre-commit.uggo-lint.bak"
     hook_path.parent.mkdir(parents=True, exist_ok=True)
@@ -162,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "doctor":
         return doctor_command(config)
     if args.command == "install-hooks":
-        return install_hooks_command(repo_root)
+        return install_hooks_command(repo_root, config)
     if args.command == "print-precommit-config":
         print(render_precommit_config())
         return 0

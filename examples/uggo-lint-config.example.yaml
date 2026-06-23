@@ -1,5 +1,12 @@
 runner: golangci-lint
+mode: default
 only_staged: true
+check_only: false
+hook_backend: native
+ignore_paths:
+  - vendor/
+ignore_rules:
+  - no-fire-and-forget-go
 required_tools:
   - go
   - golangci-lint
