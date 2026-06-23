@@ -21,6 +21,7 @@ class RunPlan:
     reason: str = ""
     go_files: list[str] = field(default_factory=list)
     commands: list[list[str]] = field(default_factory=list)
+    step_names: list[str] = field(default_factory=list)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -42,8 +43,10 @@ def build_run_plan(repo_root: Path, go_files: list[str], only_staged: bool) -> R
         go_files=go_files,
         commands=[
             ["goimports", "-w", *go_files],
-            ["golangci-lint", "run", *go_files],
+            ["git", "add", "--", *go_files],
+            ["golangci-lint", "run", "--new", "./..."],
         ],
+        step_names=["format", "restage", "lint"],
     )
 
 
@@ -66,6 +69,18 @@ def print_findings(findings: list[Finding], repo_root: Path) -> None:
         except ValueError:
             rel_path = Path(finding.path)
         print(f"[{finding.severity}] {finding.rule_id}: {rel_path} - {finding.message}")
+
+
+def run_process(command: list[str], repo_root: Path, step_name: str) -> int:
+    try:
+        subprocess.run(command, cwd=repo_root, check=True)
+    except subprocess.CalledProcessError as exc:
+        rendered = " ".join(command)
+        print(f"uggo-lint step failed: {step_name}")
+        print(f"Command: {rendered}")
+        print(f"Exit code: {exc.returncode}")
+        return exc.returncode
+    return 0
 
 
 def run_command(repo_root: Path, config: UggoLintConfig) -> int:
@@ -92,8 +107,10 @@ def run_command(repo_root: Path, config: UggoLintConfig) -> int:
         if any(f.severity == "error" for f in findings):
             return 1
 
-    for command in plan.commands:
-        subprocess.run(command, cwd=repo_root, check=True)
+    for step_name, command in zip(plan.step_names, plan.commands):
+        exit_code = run_process(command, repo_root, step_name)
+        if exit_code != 0:
+            return exit_code
 
     print("uggo-lint checks passed.")
     return 0
