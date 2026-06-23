@@ -29,3 +29,4 @@
 - 2026-06-23: Task 1 完成，已补齐配置模式、check-only 行为和 hook backend 配置入口
 - 2026-06-23: Task 2 完成，已补齐 pre-commit 检测、hook 元数据文件和接入分流提示
 - 2026-06-23: Task 3 完成，已补齐按目录聚焦 lint 目标和更完整的失败输出格式
+- 2026-06-23: Task 4 完成，已补齐 context、error string 和 receiver naming 风格规则

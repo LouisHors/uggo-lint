@@ -47,6 +47,22 @@ Useful fields:
 - run `goimports` and re-stage files unless `check_only: true`
 - print grouped step failure output with command, exit code, and stderr details
 
+## Built-in custom rules
+
+Current low-false-positive rules:
+
+- `no-init`: flags `func init()` and prefers explicit setup
+- `no-panic-outside-tests`: blocks `panic()` outside `*_test.go`
+- `no-fire-and-forget-go`: warns on bare `go ...` calls for manual review
+- `context-first`: warns when `context.Context` is not the first function parameter
+- `error-string-style`: warns when `errors.New(...)` starts uppercase or ends with punctuation
+- `receiver-name-consistency`: warns when methods of the same type use different receiver names
+
+Notes:
+
+- test files are intentionally exempt from the style-oriented `context-first` and `error-string-style` checks
+- these rules use lightweight text matching, so they aim for clear, common violations instead of deep AST analysis
+
 ## Hook integration
 
 `uggo-lint` supports three hook setup paths:
