@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- add JSON output for CLI findings
+- add `check-file` and workspace JSON commands for editor integrations
+- add a VS Code extension scaffold for live diagnostics in Go files
+
 ## 0.1.0
 
 - initialize the standalone `uggo-lint` project

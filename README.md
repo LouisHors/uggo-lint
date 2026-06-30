@@ -14,6 +14,8 @@ It combines:
 ```bash
 uggo-lint doctor
 uggo-lint run
+uggo-lint run --format json --check-only --all
+uggo-lint check-file path/to/file.go --format json
 uggo-lint install-hooks
 uggo-lint print-precommit-config
 ```
@@ -46,6 +48,33 @@ Useful fields:
 - group them by directory to build focused `golangci-lint` targets
 - run `goimports` and re-stage files unless `check_only: true`
 - print grouped step failure output with command, exit code, and stderr details
+
+## Editor integration
+
+`uggo-lint` also exposes editor-friendly commands for tools like VS Code:
+
+- `uggo-lint check-file <path> --format json` checks a single Go file and returns JSON findings.
+- `uggo-lint run --format json --check-only --all` checks the whole workspace without formatting or re-staging.
+
+The VS Code extension in `vscode-extension/` consumes these JSON commands and maps findings into the Problems panel.
+
+### Packaging and releasing the VS Code extension
+
+From the `vscode-extension` directory:
+
+```bash
+npm install
+npm run vscode:package
+npx @vscode/vsce package
+```
+
+Install the resulting `.vsix`:
+
+```bash
+code --install-extension uggo-lint-vscode-0.1.1.vsix --force
+```
+
+To publish to the Marketplace, create a `VSCE_PAT` secret and push a `vscode-v*` tag, or trigger the `publish-vscode-extension` workflow manually.
 
 ## Built-in custom rules
 
