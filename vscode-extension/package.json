@@ -1,0 +1,92 @@
+{
+  "name": "uggo-lint-vscode",
+  "displayName": "uggo-lint",
+  "description": "Run uggo-lint checks from VS Code and show diagnostics for Go files.",
+  "version": "0.1.1",
+  "publisher": "HorsLouis",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LouisHors/uggo-lint.git",
+    "directory": "vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/LouisHors/uggo-lint/issues"
+  },
+  "homepage": "https://github.com/LouisHors/uggo-lint/tree/main/vscode-extension#readme",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Linters"
+  ],
+  "keywords": [
+    "go",
+    "golang",
+    "lint",
+    "golangci-lint"
+  ],
+  "activationEvents": [
+    "onLanguage:go",
+    "onCommand:uggoLint.checkCurrentFile",
+    "onCommand:uggoLint.checkWorkspace",
+    "onCommand:uggoLint.doctor",
+    "onCommand:uggoLint.clearDiagnostics"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "uggoLint.checkCurrentFile",
+        "title": "Uggo Lint: Check Current File"
+      },
+      {
+        "command": "uggoLint.checkWorkspace",
+        "title": "Uggo Lint: Check Workspace"
+      },
+      {
+        "command": "uggoLint.doctor",
+        "title": "Uggo Lint: Doctor"
+      },
+      {
+        "command": "uggoLint.clearDiagnostics",
+        "title": "Uggo Lint: Clear Diagnostics"
+      }
+    ],
+    "configuration": {
+      "title": "uggo-lint",
+      "properties": {
+        "uggoLint.executablePath": {
+          "type": "string",
+          "default": "uggo-lint",
+          "description": "Path to the uggo-lint executable."
+        },
+        "uggoLint.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run uggo-lint on Go files when they are saved."
+        },
+        "uggoLint.timeoutMs": {
+          "type": "number",
+          "default": 30000,
+          "description": "Maximum time in milliseconds for uggo-lint commands."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "npm run compile && node --test out/runner.test.js",
+    "watch": "tsc -watch -p .",
+    "vscode:prepublish": "npm run compile",
+    "vscode:package": "npx @vscode/vsce package",
+    "vscode:publish": "npx @vscode/vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.9.3",
+    "@vscode/vsce": "^3.6.0"
+  }
+}

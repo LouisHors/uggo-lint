@@ -13,6 +13,7 @@ from uggo_lint.git_tools import (
     get_staged_files,
 )
 from uggo_lint.rules import Finding, run_custom_rules
+from uggo_lint.output import render_error_result, render_json_result
 from uggo_lint.runtime import (
     find_missing_tools,
     format_missing_tools,
@@ -33,7 +34,19 @@ class RunPlan:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="uggo-lint")
     subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("run")
+    run_parser = subparsers.add_parser("run")
+    run_parser.add_argument("--format", choices=("text", "json"), default="text")
+    run_parser.add_argument("--check-only", action="store_true")
+    run_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="check all Go files instead of only staged Go files",
+    )
+
+    check_file_parser = subparsers.add_parser("check-file")
+    check_file_parser.add_argument("path")
+    check_file_parser.add_argument("--format", choices=("text", "json"), default="text")
+
     subparsers.add_parser("install-hooks")
     subparsers.add_parser("print-precommit-config")
     subparsers.add_parser("doctor")
@@ -102,7 +115,20 @@ def print_findings(findings: list[Finding], repo_root: Path) -> None:
             rel_path = Path(finding.path).resolve().relative_to(repo_root.resolve())
         except ValueError:
             rel_path = Path(finding.path)
-        print(f"[{finding.severity}] {finding.rule_id}: {rel_path} - {finding.message}")
+        print(
+            f"[{finding.severity}] {finding.rule_id}: "
+            f"{rel_path}:{finding.line}:{finding.column} - {finding.message}"
+        )
+
+
+def collect_go_files(repo_root: Path, *, all_files: bool) -> list[str]:
+    if not all_files:
+        return filter_go_files(get_staged_files(repo_root))
+    return sorted(
+        path.relative_to(repo_root).as_posix()
+        for path in repo_root.rglob("*.go")
+        if ".git" not in path.relative_to(repo_root).parts
+    )
 
 
 def run_process(command: list[str], repo_root: Path, step_name: str) -> int:
@@ -114,17 +140,43 @@ def run_process(command: list[str], repo_root: Path, step_name: str) -> int:
     return 0
 
 
-def run_command(repo_root: Path, config: UggoLintConfig) -> int:
-    staged_files = get_staged_files(repo_root)
-    go_files = filter_go_files(staged_files)
+def run_command(
+    repo_root: Path,
+    config: UggoLintConfig,
+    *,
+    output_format: str = "text",
+    check_only: bool = False,
+    all_files: bool = False,
+) -> int:
+    if check_only or all_files:
+        config = UggoLintConfig(
+            runner=config.runner,
+            mode=config.mode,
+            only_staged=False if all_files else config.only_staged,
+            check_only=True if check_only else config.check_only,
+            hook_backend=config.hook_backend,
+            ignore_paths=config.ignore_paths,
+            ignore_rules=config.ignore_rules,
+            required_tools=config.required_tools,
+            default_linters=config.default_linters,
+        )
+
+    go_files = collect_go_files(repo_root, all_files=all_files)
     plan = build_run_plan(repo_root, go_files, config)
     if plan.should_skip:
-        print(plan.reason)
+        if output_format == "json":
+            print(render_json_result(True, [], repo_root, summary=plan.reason))
+        else:
+            print(plan.reason)
         return 0
 
     missing = find_missing_tools(config.required_tools)
     if missing:
-        print(format_missing_tools(missing))
+        message = format_missing_tools(missing)
+        if output_format == "json":
+            print(render_error_result(message, repo_root))
+        else:
+            print(message)
         return 1
 
     findings: list[Finding] = []
@@ -134,17 +186,54 @@ def run_command(repo_root: Path, config: UggoLintConfig) -> int:
             findings.extend(run_custom_rules(file_path))
 
     if findings:
-        print_findings(findings, repo_root)
+        if output_format == "json":
+            ok = not any(f.severity == "error" for f in findings)
+            print(render_json_result(ok, findings, repo_root))
+        else:
+            print_findings(findings, repo_root)
         if any(f.severity == "error" for f in findings):
             return 1
 
     for step_name, command in zip(plan.step_names, plan.commands):
         exit_code = run_process(command, repo_root, step_name)
         if exit_code != 0:
+            if output_format == "json":
+                print(render_error_result(f"uggo-lint step failed: {step_name}", repo_root))
             return exit_code
 
-    print("uggo-lint checks passed.")
+    if output_format == "json":
+        print(render_json_result(True, findings, repo_root))
+    else:
+        print("uggo-lint checks passed.")
     return 0
+
+
+def check_file_command(repo_root: Path, path: Path, output_format: str = "text") -> int:
+    file_path = path if path.is_absolute() else repo_root / path
+    if not file_path.exists():
+        message = f"File does not exist: {path}"
+        if output_format == "json":
+            print(render_error_result(message, repo_root))
+        else:
+            print(message)
+        return 1
+    if file_path.suffix != ".go":
+        message = f"Not a Go file: {path}"
+        if output_format == "json":
+            print(render_error_result(message, repo_root))
+        else:
+            print(message)
+        return 1
+
+    findings = run_custom_rules(file_path)
+    ok = not any(finding.severity == "error" for finding in findings)
+    if output_format == "json":
+        print(render_json_result(ok, findings, repo_root))
+    elif findings:
+        print_findings(findings, repo_root)
+    else:
+        print("uggo-lint checks passed.")
+    return 0 if ok else 1
 
 
 def doctor_command(config: UggoLintConfig) -> int:
@@ -203,7 +292,15 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config(repo_root)
 
     if args.command == "run":
-        return run_command(repo_root, config)
+        return run_command(
+            repo_root,
+            config,
+            output_format=args.format,
+            check_only=args.check_only,
+            all_files=args.all,
+        )
+    if args.command == "check-file":
+        return check_file_command(repo_root, Path(args.path), args.format)
     if args.command == "doctor":
         return doctor_command(config)
     if args.command == "install-hooks":
