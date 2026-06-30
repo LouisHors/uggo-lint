@@ -1,0 +1,9 @@
+src/**
+**/*.ts
+**/*.test.*
+**/*.map
+**/*.d.ts
+node_modules/**
+.vscode/**
+.git/**
+README.md.bak
