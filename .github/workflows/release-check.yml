@@ -24,4 +24,7 @@ jobs:
       - name: Verify CLI
         run: |
           uggo-lint --help
-          uggo-lint doctor
+          # Verify the check-file path works without requiring the Go toolchain,
+          # since this job only validates that the Python package installs and runs.
+          printf 'package main\n\nfunc main() {}\n' > /tmp/verify.go
+          uggo-lint check-file /tmp/verify.go --format json
